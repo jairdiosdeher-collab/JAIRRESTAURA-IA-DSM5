@@ -187,9 +187,14 @@
           <span class="flex items-center gap-1.5">
             <i data-lucide="user" class="w-3 h-3 text-cyan-400"></i> Paciente en Consulta
           </span>
-          <button onclick="openNewPatientModal()" class="text-blue-400 hover:text-blue-300 flex items-center gap-1 text-[11px]">
-            <i data-lucide="plus-circle" class="w-3 h-3"></i> Nuevo
-          </button>
+          <div class="flex items-center gap-1.5">
+            <button onclick="createNewClinicalSession()" class="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1 text-[11px] bg-cyan-500/10 hover:bg-cyan-500/20 px-2 py-0.5 rounded-lg border border-cyan-500/30 shadow-sm transition" title="Crear nueva sesión para este paciente">
+              <i data-lucide="plus-circle" class="w-3 h-3"></i> + Nueva Sesión
+            </button>
+            <button onclick="openNewPatientModal()" class="text-blue-400 hover:text-blue-300 flex items-center gap-0.5 text-[11px]" title="Nuevo Paciente">
+              <i data-lucide="user-plus" class="w-3 h-3"></i>
+            </button>
+          </div>
         </div>
         <div class="relative">
           <select id="active-patient-select" onchange="changeActivePatient(this.value)" class="w-full text-xs font-medium bg-slate-800/80 border border-slate-700 rounded-lg px-2.5 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 truncate cursor-pointer shadow-sm">
@@ -198,7 +203,14 @@
         </div>
         <div class="mt-2 text-[11px] text-slate-400 flex items-center justify-between">
           <span id="patient-age-sex" class="truncate font-mono">34 años • Masculino</span>
-          <span id="patient-eval-count" class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20 text-[10px] font-mono">2 sesiones</span>
+          <span id="patient-eval-count" onclick="navigateTo('longitudinal')" class="cursor-pointer px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20 text-[10px] font-mono hover:bg-blue-500/20 transition">2 sesiones</span>
+        </div>
+        <div class="mt-1.5 pt-1.5 border-t border-slate-800/60 flex items-center justify-between text-[10px]">
+          <span class="text-slate-500">Sesión Activa:</span>
+          <span id="patient-active-session-badge" onclick="navigateTo('longitudinal')" class="cursor-pointer font-semibold text-cyan-400 hover:underline flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+            <span id="sidebar-active-sess-label">Sesión 2 (Seguimiento)</span>
+          </span>
         </div>
       </div>
 
@@ -253,11 +265,12 @@
           <span>Pronóstico & Plan</span>
         </button>
 
-        <div class="pt-2 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Documentación y Archivo</div>
-
-        <button onclick="navigateTo('longitudinal')" id="nav-btn-longitudinal" class="nav-tab-btn w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-xl transition-all duration-200 text-slate-300 hover:bg-slate-800/80 hover:text-white">
-          <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
-          <span>Seguimiento Longitudinal</span>
+        <button onclick="navigateTo('longitudinal')" id="nav-btn-longitudinal" class="nav-tab-btn w-full flex items-center justify-between px-3 py-2 text-xs font-medium rounded-xl transition-all duration-200 text-slate-300 hover:bg-slate-800/80 hover:text-white">
+          <div class="flex items-center gap-2.5">
+            <i data-lucide="git-branch" class="w-4 h-4 text-emerald-400"></i>
+            <span>Expediente & Sesiones</span>
+          </div>
+          <span id="nav-sessions-count-pill" class="text-[10px] font-bold font-mono px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">2</span>
         </button>
 
         <button onclick="navigateTo('documents')" id="nav-btn-documents" class="nav-tab-btn w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium rounded-xl transition-all duration-200 text-slate-300 hover:bg-slate-800/80 hover:text-white">
@@ -328,21 +341,32 @@
           <p id="page-subtitle" class="text-xs text-slate-400">Entrevista anamnésica progresiva guiada por criterios DSM-5</p>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
+          <!-- Indicador y Selector Rápido de Sesión Activa -->
+          <div class="flex items-center gap-1.5 bg-slate-800/90 border border-slate-700/80 px-2.5 py-1 rounded-xl text-xs shadow-inner">
+            <span class="text-slate-400 text-[11px] font-medium hidden md:inline">Sesión:</span>
+            <select id="header-session-select" onchange="selectSession(this.value)" class="bg-transparent text-cyan-300 font-bold text-xs focus:outline-none cursor-pointer">
+              <!-- Rellenado dinámicamente -->
+            </select>
+          </div>
+          <button onclick="createNewClinicalSession()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-glow-cyan transition active:scale-95">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+            <span>+ Nueva Sesión</span>
+          </button>
           <!-- Botón de Síntesis de Voz General -->
-          <button onclick="speakCurrentContext()" id="btn-voice-speaker" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 shadow-sm transition">
+          <button onclick="speakCurrentContext()" id="btn-voice-speaker" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-xl border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 shadow-sm transition">
             <i data-lucide="volume-2" class="w-3.5 h-3.5 text-cyan-400"></i>
             <span id="voice-speaker-label">Escuchar</span>
           </button>
-          <button onclick="openAiSettingsModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-700 bg-slate-800/90 text-cyan-300 hover:bg-slate-700 shadow-sm transition">
+          <button onclick="openAiSettingsModal()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-xl border border-slate-700 bg-slate-800/90 text-cyan-300 hover:bg-slate-700 shadow-sm transition">
             <i data-lucide="key" class="w-3.5 h-3.5 text-cyan-400"></i>
-            <span>API Keys</span>
+            <span>IA</span>
           </button>
-          <button onclick="exportReportPDF()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-500 text-white shadow-glow-blue transition">
+          <button onclick="exportReportPDF()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-glow-blue transition">
             <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
             <span>PDF</span>
           </button>
-          <button onclick="exportReportDOCX()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 shadow-sm transition">
+          <button onclick="exportReportDOCX()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 shadow-sm transition">
             <i data-lucide="file-text" class="w-3.5 h-3.5 text-purple-400"></i>
             <span>DOCX</span>
           </button>
@@ -1047,47 +1071,303 @@
         </section>
 
         <!-- ======================================================== -->
-        <!-- 9. VISTA: SEGUIMIENTO LONGITUDINAL                       -->
+        <!-- 9. VISTA: EXPEDIENTE CLÍNICO & SEGUIMIENTO LONGITUDINAL  -->
         <!-- ======================================================== -->
         <section id="view-longitudinal" class="view-panel hidden space-y-6">
           
-          <div class="glass-panel rounded-2xl p-6 border border-slate-800 space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                  <i data-lucide="trending-up" class="w-5 h-5 text-emerald-400"></i> Seguimiento Clínico Longitudinal
+          <!-- Banner de Paciente y Control de Sesiones -->
+          <div class="glass-panel rounded-2xl p-5 border border-slate-800 bg-gradient-to-r from-slate-900 via-slate-900 to-blue-950/40 space-y-4">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Expediente Clínico Longitudinal
+                  </span>
+                  <span id="expedient-folio-badge" class="text-xs font-mono text-cyan-400 font-bold">JR-DSM5-2026-001</span>
+                </div>
+                <h2 id="expedient-patient-name" class="text-lg font-bold text-white flex items-center gap-2">
+                  <span>Carlos M. Restrepo</span>
+                  <span id="expedient-patient-meta" class="text-xs font-normal text-slate-400">(34 años • Masculino)</span>
                 </h2>
-                <p class="text-xs text-slate-400">Comparación objetiva de evolución entre la evaluación inicial y la actual</p>
+                <p class="text-xs text-slate-400">
+                  Seguimiento evolutivo de criterios diagnósticos DSM-5, evaluación transversal del estado mental y respuesta a la psicoterapia.
+                </p>
               </div>
-              <div class="flex items-center gap-2 text-xs">
-                <span class="text-slate-400">Comparar:</span>
-                <select id="longitudinal-select-a" onchange="renderLongitudinalView()" class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 text-xs">
-                  <!-- Rellenado dinámicamente -->
-                </select>
-                <span class="text-slate-500">vs</span>
-                <select id="longitudinal-select-b" onchange="renderLongitudinalView()" class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 text-xs">
-                  <!-- Rellenado dinámicamente -->
+
+              <!-- Acciones de Gestión de Sesiones -->
+              <div class="flex items-center gap-2 shrink-0 flex-wrap">
+                <div class="px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700 text-xs flex items-center gap-2">
+                  <span class="text-slate-400">Total Sesiones:</span>
+                  <span id="expedient-sessions-counter" class="font-mono font-bold text-cyan-300 text-sm">2</span>
+                </div>
+                <button onclick="createNewClinicalSession()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold flex items-center gap-2 shadow-glow-cyan transition active:scale-95">
+                  <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                  <span>+ Nueva Sesión</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ====================================================== -->
+          <!-- 1. TIMELINE CLÍNICO (CRONOLOGÍA VISUAL INTERACTIVA)     -->
+          <!-- ====================================================== -->
+          <div class="glass-panel rounded-2xl p-5 border border-slate-800 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                  <i data-lucide="git-commit" class="w-4 h-4 text-cyan-400"></i> Timeline Clínico Longitudinal
+                </h3>
+                <p class="text-xs text-slate-400">Seleccione cualquier sesión para cargar sus datos completos, examen mental, hipótesis e informe.</p>
+              </div>
+              <span class="text-[11px] text-slate-500 font-mono hidden sm:inline">Cronología de Consultas</span>
+            </div>
+
+            <!-- Contenedor del Timeline Visual -->
+            <div class="overflow-x-auto pb-2">
+              <div id="clinical-timeline-container" class="flex items-center gap-3 min-w-max pt-2 pb-1">
+                <!-- Rellenado dinámicamente con nodos visuales interactivos -->
+              </div>
+            </div>
+          </div>
+
+          <!-- ====================================================== -->
+          <!-- 2. FORMATO AUTOMÁTICO DE SESIÓN CLÍNICA (EDITOR)        -->
+          <!-- ====================================================== -->
+          <div class="glass-panel rounded-2xl p-6 border border-slate-800 space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span id="form-session-badge" class="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-mono font-bold text-xs">
+                    SESIÓN N° 2
+                  </span>
+                  <span id="form-session-type-badge" class="px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 text-xs font-semibold">
+                    Seguimiento
+                  </span>
+                </div>
+                <h3 class="text-base font-bold text-white">Formato Automático y Registro de la Sesión</h3>
+              </div>
+              
+              <div class="flex items-center gap-2">
+                <button onclick="triggerAiSessionDraft()" class="px-3 py-1.5 rounded-xl border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-medium flex items-center gap-1.5 transition">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-cyan-400"></i>
+                  <span>Asistir Evolución con IA</span>
+                </button>
+                <button onclick="saveSessionTemplateForm()" class="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-glow-blue transition">
+                  <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                  <span>Guardar Sesión</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Campos Principales de la Plantilla -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+              <div class="space-y-1.5">
+                <label class="font-semibold text-slate-300 flex items-center gap-1">
+                  <i data-lucide="hash" class="w-3.5 h-3.5 text-blue-400"></i> Número de Sesión
+                </label>
+                <input type="text" id="sess-form-number" readonly class="w-full bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-white font-mono font-bold">
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="font-semibold text-slate-300 flex items-center gap-1">
+                  <i data-lucide="calendar" class="w-3.5 h-3.5 text-cyan-400"></i> Fecha de la Sesión
+                </label>
+                <input type="date" id="sess-form-date" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-blue-500">
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="font-semibold text-slate-300 flex items-center gap-1">
+                  <i data-lucide="clock" class="w-3.5 h-3.5 text-purple-400"></i> Hora
+                </label>
+                <input type="time" id="sess-form-time" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-blue-500">
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="font-semibold text-slate-300 flex items-center gap-1">
+                  <i data-lucide="tag" class="w-3.5 h-3.5 text-amber-400"></i> Tipo de Sesión
+                </label>
+                <select id="sess-form-type" onchange="updateSessionTypeFromSelect(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white focus:ring-2 focus:ring-blue-500">
+                  <option value="Evaluación Inicial">Evaluación Inicial</option>
+                  <option value="Seguimiento">Seguimiento</option>
+                  <option value="Reevaluación">Reevaluación</option>
+                  <option value="Cierre">Cierre</option>
                 </select>
               </div>
             </div>
 
-            <!-- Gráfico Comparativo de Barras Agrupadas -->
+            <!-- Objetivo de la Sesión -->
+            <div class="space-y-1.5 text-xs">
+              <label class="font-semibold text-slate-300 flex items-center gap-1.5">
+                <i data-lucide="target" class="w-3.5 h-3.5 text-cyan-400"></i> Objetivo de la Sesión
+              </label>
+              <textarea id="sess-form-objective" rows="2" placeholder="Describa el objetivo principal pactado para esta consulta (ej. Revisión de autorregistro, exploración de sintomatología somática, ajuste de técnicas)..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white text-xs leading-relaxed focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+
+            <!-- Evolución Clínica -->
+            <div class="space-y-1.5 text-xs">
+              <div class="flex items-center justify-between">
+                <label class="font-semibold text-slate-300 flex items-center gap-1.5">
+                  <i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-400"></i> Evolución Clínica
+                </label>
+                <span class="text-[10px] text-slate-500">No se copia entre sesiones: debe registrarse para cada cita</span>
+              </div>
+              <textarea id="sess-form-evolution" rows="3" placeholder="Estado del paciente desde la última cita: remisión o empeoramiento de síntomas, acontecimientos vitales relevantes, adherencia terapéutica y tolerancia a tareas..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white text-xs leading-relaxed focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+
+            <!-- Técnicas Aplicadas con Chips de Selección Rápida -->
+            <div class="space-y-2 text-xs">
+              <label class="font-semibold text-slate-300 flex items-center gap-1.5">
+                <i data-lucide="wrench" class="w-3.5 h-3.5 text-purple-400"></i> Técnicas Aplicadas
+              </label>
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" onclick="addTechniqueChip('TCC (Terapia Cognitivo-Conductual)')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition">+ TCC</button>
+                <button type="button" onclick="addTechniqueChip('Activación Conductual')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition">+ Activación Conductual</button>
+                <button type="button" onclick="addTechniqueChip('Reestructuración Cognitiva (Cuestionamiento Socrático)')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition">+ Reestructuración Cognitiva</button>
+                <button type="button" onclick="addTechniqueChip('Exposición con Prevención de Respuesta (EPR)')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition">+ EPR</button>
+                <button type="button" onclick="addTechniqueChip('Desensibilización Sistemática')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition">+ Desensibilización</button>
+                <button type="button" onclick="addTechniqueChip('Mindfulness y Aceptación')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition">+ Mindfulness</button>
+                <button type="button" onclick="addTechniqueChip('Psicoeducación Familiar y del Paciente')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition">+ Psicoeducación</button>
+                <button type="button" onclick="addTechniqueChip('Entrenamiento en Asertividad y Límites')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition">+ Asertividad</button>
+                <button type="button" onclick="addTechniqueChip('Prevención de Recaídas')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] transition">+ Prevención de Recaídas</button>
+              </div>
+              <input type="text" id="sess-form-techniques" placeholder="Técnicas aplicadas durante la sesión..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white text-xs focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Tareas Asignadas y Próxima Cita -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div class="space-y-1.5">
+                <label class="font-semibold text-slate-300 flex items-center gap-1.5">
+                  <i data-lucide="check-square" class="w-3.5 h-3.5 text-amber-400"></i> Tareas Asignadas para Casa
+                </label>
+                <textarea id="sess-form-homework" rows="2" placeholder="Actividades intersesión, autorregistros, ejercicios conductuales o lecturas acordadas..." class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white text-xs leading-relaxed focus:ring-2 focus:ring-blue-500"></textarea>
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="font-semibold text-slate-300 flex items-center gap-1.5">
+                  <i data-lucide="calendar-clock" class="w-3.5 h-3.5 text-cyan-400"></i> Próxima Cita de Seguimiento
+                </label>
+                <input type="text" id="sess-form-next" placeholder="Ej. 2026-10-24 a las 10:00 AM (quincenal)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white text-xs focus:ring-2 focus:ring-blue-500">
+                <p class="text-[10px] text-slate-500">Frecuencia recomendada según nivel de riesgo actual.</p>
+              </div>
+            </div>
+
+            <!-- Accesos Rápidos a Módulos Clínicos de la Sesión -->
+            <div class="pt-2 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="navigateTo('mse')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 flex items-center gap-1.5 transition">
+                  <i data-lucide="clipboard-check" class="w-3.5 h-3.5 text-amber-400"></i>
+                  <span>Completar Examen Mental (MSE)</span>
+                </button>
+                <button type="button" onclick="navigateTo('profile')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 flex items-center gap-1.5 transition">
+                  <i data-lucide="radar" class="w-3.5 h-3.5 text-cyan-400"></i>
+                  <span>Radar Dimensional</span>
+                </button>
+              </div>
+              <div class="text-[11px] text-slate-400 font-mono">
+                Estado: <span id="sess-save-status" class="text-emerald-400 font-semibold">Guardado localmente</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- ====================================================== -->
+          <!-- 3. COMPARADOR INTERACTIVO DE SESIONES                   -->
+          <!-- ====================================================== -->
+          <div class="glass-panel rounded-2xl p-6 border border-slate-800 space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <i data-lucide="split" class="w-5 h-5 text-cyan-400"></i> Comparador Interactivo Entre Sesiones
+                </h3>
+                <p class="text-xs text-slate-400">Contraste cuantitativo y cualitativo de la evolución entre dos sesiones seleccionadas</p>
+              </div>
+
+              <!-- Selectores de Sesiones y Modo de Gráfica -->
+              <div class="flex items-center gap-2 text-xs flex-wrap">
+                <span class="text-slate-400">Comparar:</span>
+                <select id="longitudinal-select-a" onchange="renderLongitudinalView()" class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 text-xs focus:ring-1 focus:ring-blue-500">
+                  <!-- Rellenado dinámicamente -->
+                </select>
+                <span class="text-slate-500 font-bold">vs</span>
+                <select id="longitudinal-select-b" onchange="renderLongitudinalView()" class="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 text-xs focus:ring-1 focus:ring-blue-500">
+                  <!-- Rellenado dinámicamente -->
+                </select>
+                
+                <div class="flex items-center bg-slate-800 border border-slate-700 rounded-lg p-0.5 ml-1">
+                  <button type="button" id="btn-chart-bar" onclick="setCompareChartType('bar')" class="px-2.5 py-1 rounded text-[11px] font-semibold bg-blue-600 text-white transition">Barras</button>
+                  <button type="button" id="btn-chart-radar" onclick="setCompareChartType('radar')" class="px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white transition">Radar</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3 Tarjetas de Resumen Comparativo de la Evolución -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <!-- Tarjeta 1: Evolución de Síntomas -->
+              <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                    <i data-lucide="activity" class="w-4 h-4 text-cyan-400"></i> Evolución de Síntomas
+                  </span>
+                  <span id="comp-symptoms-pill" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
+                    -46% Remisión
+                  </span>
+                </div>
+                <p id="comp-symptoms-text" class="text-slate-400 text-[11px] leading-relaxed">
+                  Disminución sustancial del malestar afectivo y la tensión psicosomática entre ambas citas.
+                </p>
+              </div>
+
+              <!-- Tarjeta 2: Nivel de Riesgo -->
+              <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i> Reducción de Riesgo
+                  </span>
+                  <span id="comp-risk-pill" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
+                    MODERADO → BAJO
+                  </span>
+                </div>
+                <p id="comp-risk-text" class="text-slate-400 text-[11px] leading-relaxed">
+                  Disminución de rumiación de muerte y fortalecimiento de red de contención protectora (+30%).
+                </p>
+              </div>
+
+              <!-- Tarjeta 3: Hipótesis Diagnóstica -->
+              <div class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-slate-300 flex items-center gap-1.5">
+                    <i data-lucide="shuffle" class="w-4 h-4 text-purple-400"></i> Hipótesis Diagnóstica
+                  </span>
+                  <span id="comp-dx-status-pill" class="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-500/20 text-blue-300">
+                    Remisión Parcial
+                  </span>
+                </div>
+                <p id="comp-dx-text" class="text-slate-400 text-[11px] leading-relaxed truncate" title="Trastorno Depresivo Mayor Grave → Remisión Parcial">
+                  Episodio Agudo Grave → Remisión Parcial
+                </p>
+              </div>
+            </div>
+
+            <!-- Gráfico Comparativo Interactivo (Barras o Radar Superpuesto) -->
             <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
-              <div class="h-[340px] w-full">
+              <div class="h-[360px] w-full">
                 <canvas id="longitudinalCompareCanvas"></canvas>
               </div>
             </div>
 
             <!-- Tabla de Deltas de Variación -->
             <div class="space-y-2">
-              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300">Variación Porcentual y Respuesta Clínica</h3>
+              <div class="flex items-center justify-between">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300">Matriz Dimensional de Variación (Δ)</h4>
+                <span class="text-[10px] text-slate-500">Cálculo porcentual exacto</span>
+              </div>
               <div class="overflow-x-auto rounded-xl border border-slate-800">
                 <table class="w-full text-left text-xs border-collapse">
                   <thead class="bg-slate-900 text-slate-400 border-b border-slate-800">
                     <tr>
                       <th class="p-3">Dimensión Clínica</th>
-                      <th class="p-3">Evaluación Base</th>
-                      <th class="p-3">Evaluación Actual</th>
+                      <th class="p-3">Sesión A</th>
+                      <th class="p-3">Sesión B</th>
                       <th class="p-3">Variación (Δ)</th>
                       <th class="p-3">Interpretación Clínica</th>
                     </tr>
@@ -1097,6 +1377,156 @@
                   </tbody>
                 </table>
               </div>
+            </div>
+
+          </div>
+
+          <!-- ====================================================== -->
+          <!-- 4. INFORME DE EVOLUCIÓN LONGITUDINAL COMPILADO          -->
+          <!-- ====================================================== -->
+          <div class="glass-panel rounded-2xl p-6 border border-slate-800 space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+              <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <i data-lucide="file-check-2" class="w-5 h-5 text-emerald-400"></i> Informe de Evolución Longitudinal Multi-Sesión
+                </h3>
+                <p class="text-xs text-slate-400">Compilación formal del expediente para archivo, derivación o entrega al paciente</p>
+              </div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <button onclick="exportLongitudinalReportPDF()" class="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-glow-blue transition">
+                  <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
+                  <span>Descargar Informe PDF</span>
+                </button>
+                <button onclick="exportLongitudinalReportDOCX()" class="px-3.5 py-1.5 rounded-xl border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+                  <i data-lucide="file-text" class="w-3.5 h-3.5 text-purple-400"></i>
+                  <span>Descargar Informe DOCX</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Gráfico de Trayectoria Temporal en el Tiempo -->
+            <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                  <i data-lucide="line-chart" class="w-4 h-4 text-cyan-400"></i> Progreso Clínico en el Tiempo (Curva Evolutiva)
+                </span>
+                <span class="text-[11px] text-slate-400">Valores a través de todas las sesiones registradas</span>
+              </div>
+              <div class="h-[280px] w-full">
+                <canvas id="trajectoryCanvas"></canvas>
+              </div>
+            </div>
+
+            <!-- Documento Imprimible del Informe Longitudinal (Vista Previa Oficial) -->
+            <div id="longitudinal-official-report" class="bg-white text-slate-900 p-6 sm:p-10 rounded-2xl border border-slate-300 shadow-2xl space-y-6 text-xs leading-relaxed font-sans">
+              
+              <!-- Membrete Oficial -->
+              <div class="border-b-2 border-blue-600 pb-4 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xl font-extrabold text-blue-700 tracking-tight">JAIRRESTAURA DSM-5 PRO</span>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-200">EXPEDIENTE</span>
+                  </div>
+                  <p class="text-[11px] text-slate-500 font-medium">INFORME DE EVOLUCIÓN LONGITUDINAL Y TRAYECTORIA CLÍNICA</p>
+                </div>
+                <div class="text-left sm:text-right text-[11px] text-slate-600 font-mono">
+                  <div><strong>Folio:</strong> <span id="rep-long-folio">JR-DSM5-2026-001</span></div>
+                  <div><strong>Fecha de Emisión:</strong> <span id="rep-long-date">2026-10-13</span></div>
+                  <div><strong>Total Sesiones:</strong> <span id="rep-long-sess-count">2 Sesiones</span></div>
+                </div>
+              </div>
+
+              <!-- Aviso Ético y Legal Visible Obligatorio -->
+              <div class="p-3 bg-amber-50 border-l-4 border-amber-500 rounded text-[11px] text-amber-900">
+                <strong>AVISO LEGAL Y CLÍNICO:</strong> Esta herramienta es únicamente de apoyo clínico y educativo. No sustituye la evaluación diagnóstica realizada por un profesional de salud mental colegiado.
+              </div>
+
+              <!-- Ficha de Identificación del Paciente -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-slate-800">
+                <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Paciente:</span><strong id="rep-long-name">Carlos M. Restrepo</strong></div>
+                <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Edad / Sexo:</span><span id="rep-long-age-sex">34 años • Masculino</span></div>
+                <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Ocupación:</span><span id="rep-long-occ">Finanzas</span></div>
+                <div><span class="text-slate-500 block text-[10px] uppercase font-bold">Período Clínico:</span><span id="rep-long-period">Ago 2026 - Oct 2026</span></div>
+              </div>
+
+              <!-- Resumen Ejecutivo de la Trayectoria -->
+              <div class="space-y-1.5">
+                <h4 class="font-bold text-slate-900 border-b border-slate-200 pb-1 text-sm flex items-center gap-1.5">
+                  1. Resumen de Trayectoria y Curso Clínico
+                </h4>
+                <p id="rep-long-narrative" class="text-slate-700 leading-relaxed text-justify">
+                  El paciente fue admitido inicialmente con criterios plenos para Trastorno Depresivo Mayor Grave y marcada comorbilidad ansiosa. A lo largo del seguimiento longitudinal estructurado y la aplicación de intervenciones cognitivo-conductuales (activación conductual, higiene de sueño y reestructuración), se constata una evolución favorable con remisión sintomática del 46% y restablecimiento progresivo del funcionamiento laboral y social.
+                </p>
+              </div>
+
+              <!-- Cronograma Completo de Sesiones -->
+              <div class="space-y-2">
+                <h4 class="font-bold text-slate-900 border-b border-slate-200 pb-1 text-sm flex items-center gap-1.5">
+                  2. Registro Cronológico de Sesiones
+                </h4>
+                <div class="overflow-x-auto rounded-lg border border-slate-200">
+                  <table class="w-full text-left text-[11px] border-collapse">
+                    <thead class="bg-slate-100 text-slate-700 border-b border-slate-200 font-bold">
+                      <tr>
+                        <th class="p-2.5">Sesión</th>
+                        <th class="p-2.5">Fecha</th>
+                        <th class="p-2.5">Tipo</th>
+                        <th class="p-2.5">Diagnóstico / Estado</th>
+                        <th class="p-2.5">Riesgo</th>
+                        <th class="p-2.5">Técnicas / Evolución</th>
+                      </tr>
+                    </thead>
+                    <tbody id="rep-long-sessions-table" class="divide-y divide-slate-200 text-slate-800">
+                      <!-- Rellenado dinámicamente -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Comparativa Inicial vs Actual -->
+              <div class="space-y-2">
+                <h4 class="font-bold text-slate-900 border-b border-slate-200 pb-1 text-sm flex items-center gap-1.5">
+                  3. Comparativa: Evaluación Inicial vs Sesión Actual
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="p-3 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                    <strong class="text-slate-800 block text-xs">Línea Base (Sesión Inicial):</strong>
+                    <p id="rep-long-initial-summary" class="text-slate-600 text-[11px]">
+                      Sintomatología aguda invalidante, anhedonia total, insomnio mixto, riesgo moderado de desesperanza.
+                    </p>
+                  </div>
+                  <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200 space-y-1">
+                    <strong class="text-emerald-900 block text-xs">Estado en Última Sesión:</strong>
+                    <p id="rep-long-current-summary" class="text-emerald-800 text-[11px]">
+                      Remisión parcial favorable, reintegración funcional al 75%, descanso reparador recuperado, factores de protección consolidados.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Conclusiones y Plan Terapéutico Futuro -->
+              <div class="space-y-1.5">
+                <h4 class="font-bold text-slate-900 border-b border-slate-200 pb-1 text-sm flex items-center gap-1.5">
+                  4. Conclusiones y Plan de Continuidad
+                </h4>
+                <p id="rep-long-plan" class="text-slate-700 leading-relaxed text-justify">
+                  Se sugiere espaciar las citas a régimen quincenal/mensual para consolidación de logros y prevención de recaídas. Mantener pautas de higiene de sueño y autorregistros ante picos de estrés laboral.
+                </p>
+              </div>
+
+              <!-- Firma y Sello -->
+              <div class="pt-8 flex justify-between items-end">
+                <div class="text-[10px] text-slate-500">
+                  Documento emitido electrónicamente por el sistema JAIRRESTAURA DSM-5 PRO.<br>
+                  Válido como anexo al expediente clínico del paciente.
+                </div>
+                <div class="text-center">
+                  <div class="w-48 border-b border-slate-800 mb-1"></div>
+                  <span class="text-[11px] font-bold text-slate-800 block">Firma del Profesional Evaluador</span>
+                  <span class="text-[10px] text-slate-500">Psicólogo Clínico / Psiquiatra</span>
+                </div>
+              </div>
+
             </div>
 
           </div>
@@ -1840,13 +2270,16 @@
     let proState = {
       patients: [],
       activePatientId: null,
+      activeSessionId: null,
+      compareChartType: 'bar', // 'bar' | 'radar'
       currentView: 'chat',
       theme: 'dark',
       fontSize: 'md',
       highContrast: false,
       charts: {
         radar: null,
-        longitudinal: null
+        longitudinal: null,
+        trajectory: null
       },
       // Sesión Conversacional
       chatSession: {
@@ -2454,9 +2887,22 @@
         }
       }
 
-      if (!proState.patients || proState.patients.length === 0) {
+      // Migrar o inicializar pacientes si es necesario
+      if (!proState.patients || proState.patients.length === 0 || !proState.patients.some(p => p.name.includes('Jair'))) {
         seedInitialDemoPatient();
       }
+
+      // Asegurar integridad de sesiones
+      proState.patients.forEach(pat => {
+        if (!pat.clinicalSessions || pat.clinicalSessions.length === 0) {
+          pat.clinicalSessions = [createDefaultInitialSession(pat)];
+        }
+        pat.clinicalSessions.forEach((s, idx) => {
+          if (!s.sessionNumber) s.sessionNumber = idx + 1;
+          if (!s.type) s.type = idx === 0 ? 'Evaluación Inicial' : 'Seguimiento';
+          if (!s.label) s.label = `Sesión ${s.sessionNumber} - ${s.type}`;
+        });
+      });
 
       const activeId = localStorage.getItem('jair_pro_active_id');
       if (activeId && proState.patients.some(p => p.id === activeId)) {
@@ -2464,6 +2910,9 @@
       } else {
         proState.activePatientId = proState.patients[0].id;
       }
+
+      const patient = getActivePatient();
+      proState.activeSessionId = patient.clinicalSessions[patient.clinicalSessions.length - 1].id;
     }
 
     function saveDatabase() {
@@ -2475,10 +2924,204 @@
       return proState.patients.find(p => p.id === proState.activePatientId) || proState.patients[0];
     }
 
+    function getActiveSession() {
+      const patient = getActivePatient();
+      if (!patient.clinicalSessions || patient.clinicalSessions.length === 0) {
+        patient.clinicalSessions = [createDefaultInitialSession(patient)];
+        saveDatabase();
+      }
+      let sess = patient.clinicalSessions.find(s => s.id === proState.activeSessionId);
+      if (!sess) {
+        sess = patient.clinicalSessions[patient.clinicalSessions.length - 1];
+        proState.activeSessionId = sess.id;
+      }
+      return sess;
+    }
+
+    function createDefaultInitialSession(pat) {
+      return {
+        id: 'sess_' + Date.now(),
+        sessionNumber: 1,
+        type: 'Evaluación Inicial',
+        date: new Date().toISOString().split('T')[0],
+        time: '10:00',
+        label: 'Sesión 1 - Evaluación Inicial',
+        objective: 'Evaluación psicodiagnóstica inicial e historia clínica DSM-5.',
+        evolution: 'Primera consulta de encuadre y exploración de la sintomatología predominante.',
+        clinicalObservations: 'Adecuado contacto visual, orientación global preservada.',
+        techniques: 'Entrevista clínica estructurada DSM-5, Psicoeducación inicial, Encuadre',
+        homework: 'Autorregistro de síntomas y factores desencadenantes.',
+        nextAppointment: '',
+        scores: {
+          emocional: 75,
+          ansiedad: 70,
+          riesgo: 20,
+          cognicion: 50,
+          percepcion: 10,
+          laboral: 65,
+          social: 55,
+          protectores: 60
+        },
+        riskLevel: 'moderate',
+        primaryDx: 'Evaluación Clínica Inicial en Curso',
+        differentials: [],
+        riskFactors: 'Estresores psicosociales recientes y sobrecarga de responsabilidades.',
+        protectiveFactors: 'Deseo activo de tratamiento y adecuada red de apoyo vincular.',
+        mseData: { ...proState.mseData }
+      };
+    }
+
     function seedInitialDemoPatient() {
-      const demoPatient = {
-        id: 'pat_2026_01',
+      const patientJair = {
+        id: 'pat_jair_2026',
         folio: 'JR-DSM5-2026-001',
+        name: 'Jair Hernandez Rodriguez',
+        age: 32,
+        sex: 'Masculino',
+        occupation: 'Ingeniero de Software Senior',
+        notes: 'Consulta inicial por sintomatología ansioso-depresiva reactiva a sobrecarga laboral, insomnio y dificultades de desconexión.',
+        createdAt: '2026-08-10',
+        clinicalSessions: [
+          {
+            id: 'sess_jair_01',
+            sessionNumber: 1,
+            type: 'Evaluación Inicial',
+            date: '2026-08-10',
+            time: '09:30',
+            label: 'Sesión 1 - Evaluación Inicial',
+            objective: 'Anamnesis clínica integral, exploración de motivo de consulta y descarte de patología orgánica.',
+            evolution: 'El paciente refiere 3 meses con agotamiento persistente, dificultades para conciliar el sueño (latencia >2h), rumiación laboral y tensión cervical.',
+            clinicalObservations: 'Aliño adecuado, actitud colaboradora, facie tensa, habla acelerada al describir pendientes laborales. Sin alteraciones sensoperceptivas.',
+            techniques: 'Entrevista clínica estructurada DSM-5, Psicoeducación sobre ciclo neurobiológico de la ansiedad, Encuadre terapéutico.',
+            homework: 'Autorregistro ABC de situaciones estresantes y registro diario de patrones de sueño.',
+            nextAppointment: '2026-08-24 10:00',
+            scores: {
+              emocional: 75,
+              ansiedad: 86,
+              riesgo: 15,
+              cognicion: 60,
+              percepcion: 5,
+              laboral: 78,
+              social: 52,
+              protectores: 65
+            },
+            riskLevel: 'moderate',
+            primaryDx: 'Trastorno de Ansiedad Generalizada (F41.1) con síntomas afectivos reactivos',
+            differentials: [
+              { name: 'Trastorno de Ansiedad Generalizada', code: 'F41.1', match: 88, reason: 'Preocupación excesiva incontrolable, tensión somática e insomnio crónico.' },
+              { name: 'Trastorno Depresivo Mayor Leve', code: 'F32.0', match: 62, reason: 'Fatiga y anhedonia parcial derivada del agotamiento.' },
+              { name: 'Trastorno de Adaptación con Ansiedad', code: 'F43.22', match: 50, reason: 'Estresor laboral claro, evolución de 3 meses.' }
+            ],
+            riskFactors: 'Jornadas de trabajo >12 horas diarias, perfeccionismo rígido, antecedente familiar de ansiedad materna.',
+            protectiveFactors: 'Alta motivación para la psicoterapia, buen insight, soporte conyugal estable, ausencia de abuso de sustancias.',
+            mseData: {
+              apariencia: 'Adecuada, aliño conservado, postura tensa con hipertonía cervical.',
+              conducta: 'Colaboradora, inquietud motora leve en miembros inferiores.',
+              afecto: 'Congruente, hiperreactivo con valencia ansiosa.',
+              animo: 'Ansioso, aprensivo, preocupado por rendimiento.',
+              pensamiento: 'Curso taquipsíquico, rumiaciones sobre demandas de proyectos; sin ideas delirantes.',
+              lenguaje: 'Fluido, coherente, tono algo presivo.',
+              atencion: 'Normoprosexia con distractibilidad por rumiaciones.',
+              memoria: 'Conservada en corto y largo plazo.',
+              insight: 'Adecuado, reconoce desborde por estrés.',
+              juicio: 'Juicio de realidad preservado.',
+              orientacion: 'Orientado en las 3 esferas.'
+            }
+          },
+          {
+            id: 'sess_jair_02',
+            sessionNumber: 2,
+            type: 'Seguimiento',
+            date: '2026-08-24',
+            time: '10:00',
+            label: 'Sesión 2 - Seguimiento',
+            objective: 'Revisión de autorregistro ABC, reestructuración cognitiva y entrenamiento en desactivación fisiológica diafragmática.',
+            evolution: 'Completó el autorregistro con alta fidelidad. Identificó pensamientos automáticos de catastrofismo ante revisiones de código. Mejoró conciliación de sueño (latencia reducida a 45 min).',
+            clinicalObservations: 'Menor tensión corporal observable, postura más relajada, discurso reflexivo y receptivo a la intervención.',
+            techniques: 'Reestructuración Cognitiva (Cuestionamiento Socrático), Respiración Diafragmática Lenta, Desactivación Fisiológica.',
+            homework: 'Práctica de respiración 10 minutos 2 veces al día. Cuestionar pensamientos automáticos con técnica de doble estándar.',
+            nextAppointment: '2026-09-07 10:00',
+            scores: {
+              emocional: 55,
+              ansiedad: 60,
+              riesgo: 10,
+              cognicion: 45,
+              percepcion: 5,
+              laboral: 55,
+              social: 42,
+              protectores: 78
+            },
+            riskLevel: 'low',
+            primaryDx: 'Trastorno de Ansiedad Generalizada en Tratamiento Activo Favorable (F41.1)',
+            differentials: [
+              { name: 'Trastorno de Ansiedad Generalizada', code: 'F41.1', match: 72, reason: 'Marcada mejoría de síntomas somáticos y de latencia del sueño.' }
+            ],
+            riskFactors: 'Exigencias de entrega de software en sprint actual.',
+            protectiveFactors: 'Adherencia excelente a autorregistros y ejercicios de respiración.',
+            mseData: {
+              apariencia: 'Adecuada, expresión facial más relajada.',
+              conducta: 'Tranquila, buen contacto visual continuado.',
+              afecto: 'Modulado, reactividad emocional preservada.',
+              animo: 'Más sereno, esperanzado respecto al tratamiento.',
+              pensamiento: 'Curso eukinético y coherente, menor carga rumiatoria.',
+              lenguaje: 'Fluido, volumen y tono normales.',
+              atencion: 'Concentración mejorada.',
+              memoria: 'Conservada.',
+              insight: 'Excelente introspección.',
+              juicio: 'Conservado.',
+              orientacion: 'Orientado en tiempo, espacio y persona.'
+            }
+          },
+          {
+            id: 'sess_jair_03',
+            sessionNumber: 3,
+            type: 'Seguimiento',
+            date: '2026-09-07',
+            time: '10:00',
+            label: 'Sesión 3 - Seguimiento',
+            objective: 'Tolerancia a la incertidumbre, establecimiento de límites laborales asertivos y consolidación de hábitos de ocio.',
+            evolution: 'Reporta remisión casi total de taquicardia y opresión torácica. Logró establecer horario de corte laboral a las 18:30 sin sentimientos de culpa. Retomó actividad deportiva 3 veces por semana.',
+            clinicalObservations: 'Eutímico, sonriente, afecto flexible y resonante, excelente alianza terapéutica y sensación de autoeficacia.',
+            techniques: 'Entrenamiento en Asertividad y Límites Laborales, Exposición a la Incertidumbre, Planificación de Actividades Placenteras.',
+            homework: 'Mantener corte laboral estricto y planificar fin de semana sin revisar correo corporativo.',
+            nextAppointment: '2026-09-28 10:00',
+            scores: {
+              emocional: 32,
+              ansiedad: 35,
+              riesgo: 5,
+              cognicion: 25,
+              percepcion: 5,
+              laboral: 30,
+              social: 25,
+              protectores: 92
+            },
+            riskLevel: 'low',
+            primaryDx: 'Trastorno de Ansiedad Generalizada en Remisión Parcial Significativa (F41.1)',
+            differentials: [
+              { name: 'Trastorno de Ansiedad Generalizada', code: 'F41.1', match: 35, reason: 'Remisión sintomática >50%, funcionalidad plenamente restaurada.' }
+            ],
+            riskFactors: 'Perfeccionismo residual en proyectos de alta complejidad.',
+            protectiveFactors: 'Límites laborales establecidos, soporte de pareja activo, autoeficacia alta.',
+            mseData: {
+              apariencia: 'Impecable, aliño conservado, actitud tranquila y receptiva.',
+              conducta: 'Sociable, postura cómoda y espontánea.',
+              afecto: 'Eutímico, reactivo, amplio rango emocional.',
+              animo: 'Satisfecho, tranquilo, motivado.',
+              pensamiento: 'Coherente, lógico, orientado a metas realistas.',
+              lenguaje: 'Fluido, prosodia rica y expresiva.',
+              atencion: 'Normoprosexia plena.',
+              memoria: 'Íntegra.',
+              insight: 'Excelente, alta conciencia preventiva.',
+              juicio: 'Juicio de realidad íntegro.',
+              orientacion: 'Completamente orientado.'
+            }
+          }
+        ]
+      };
+
+      const patientCarlos = {
+        id: 'pat_2026_01',
+        folio: 'JR-DSM5-2026-002',
         name: 'Carlos M. Restrepo',
         age: 34,
         sex: 'Masculino',
@@ -2488,8 +3131,17 @@
         clinicalSessions: [
           {
             id: 'sess_01',
+            sessionNumber: 1,
+            type: 'Evaluación Inicial',
             date: '2026-08-15',
-            label: 'Evaluación Inicial (Línea Base)',
+            time: '10:00',
+            label: 'Sesión 1 - Evaluación Inicial',
+            objective: 'Evaluación psicodiagnóstica de episodio depresivo y descarte de riesgo autolítico.',
+            evolution: 'Presenta cuadro de 3 meses con anhedonia total, astenia invalidante, insomnio de mantenimiento y llanto fácil.',
+            clinicalObservations: 'Facies melancólica, retardo psicomotor leve, contacto visual vacilante.',
+            techniques: 'Entrevista clínica DSM-5, Psicoeducación en depresión mayor, Contrato terapéutico.',
+            homework: 'Monitoreo básico de descanso y registro de pensamientos automáticos de culpa.',
+            nextAppointment: '2026-09-01 11:00',
             scores: {
               emocional: 88,
               ansiedad: 75,
@@ -2500,17 +3152,30 @@
               social: 70,
               protectores: 55
             },
+            riskLevel: 'moderate',
             primaryDx: 'Trastorno Depresivo Mayor, Episodio Único, Grave (F32.2)',
             differentials: [
               { name: 'Trastorno de Ansiedad Generalizada', code: 'F41.1', match: 79, reason: 'Tensión muscular y rumiación aprensiva crónica comórbida.' },
-              { name: 'Trastorno Bipolar II (Fase Depresiva)', code: 'F31.81', match: 38, reason: 'Sin historia clara de hipomanía previa.' },
+              { name: 'Trastorno Bipolar II (Fase Depresiva)', code: 'F31.81', match: 38, reason: 'Sin historia de hipomanía previa.' },
               { name: 'Trastorno de Adaptación con Ánimo Deprimido', code: 'F43.21', match: 25, reason: 'Supera el umbral de adaptación simple por severidad biológica.' }
-            ]
+            ],
+            riskFactors: 'Adversidad y sobrecarga financiera, antecedentes familiares de depresión materna.',
+            protectiveFactors: 'Apoyo familiar de pareja, ausencia de consumo perjudicial de sustancias.',
+            mseData: { ...proState.mseData }
           },
           {
             id: 'sess_02',
+            sessionNumber: 2,
+            type: 'Seguimiento',
             date: '2026-10-10',
-            label: 'Sesión de Seguimiento (Semana 8)',
+            time: '11:00',
+            label: 'Sesión 2 - Seguimiento',
+            objective: 'Revisión de activación conductual y tolerancia al tratamiento farmacológico y psicoterapéutico.',
+            evolution: 'Mejoría gradual en anhedonia tras 8 semanas de TCC y farmacoterapia. Retomó lectura y caminatas diarias.',
+            clinicalObservations: 'Mayor viveza en la mirada, discurso con prosodia modulada y menor latencia de respuesta.',
+            techniques: 'Activación Conductual (programación de actividades placenteras y de dominio), Reestructuración Cognitiva.',
+            homework: 'Mantener caminatas matutinas 30 min y registro de sensaciones de agrado.',
+            nextAppointment: '2026-10-24 11:00',
             scores: {
               emocional: 42,
               ansiedad: 38,
@@ -2521,15 +3186,33 @@
               social: 30,
               protectores: 85
             },
+            riskLevel: 'low',
             primaryDx: 'Trastorno Depresivo Mayor en Remisión Parcial (F32.1)',
             differentials: [
               { name: 'Trastorno de Ansiedad Generalizada', code: 'F41.1', match: 40, reason: 'Marcada mejoría de tensión somática tras farmacoterapia y TCC.' }
-            ]
+            ],
+            riskFactors: 'Exigencia laboral residual.',
+            protectiveFactors: 'Red de apoyo continente y respuesta biológica favorable.',
+            mseData: {
+              apariencia: 'Adecuada, aliño conservado, facies más despejada.',
+              conducta: 'Colaboradora, motricidad normal.',
+              afecto: 'Resonante, congruente.',
+              animo: 'Tranquilo, eutímico la mayor parte del tiempo.',
+              pensamiento: 'Coherente, sin ideas de minusvalía activa.',
+              lenguaje: 'Fluido con prosodia normal.',
+              atencion: 'Concentración recuperada.',
+              memoria: 'Conservada.',
+              insight: 'Pleno.',
+              juicio: 'Preservado.',
+              orientacion: 'Orientado en las 3 esferas.'
+            }
           }
         ]
       };
 
-      proState.patients = [demoPatient];
+      proState.patients = [patientJair, patientCarlos];
+      proState.activePatientId = patientJair.id;
+      proState.activeSessionId = patientJair.clinicalSessions[patientJair.clinicalSessions.length - 1].id;
       saveDatabase();
     }
 
@@ -2900,16 +3583,16 @@
      */
     function renderProfileView() {
       const patient = getActivePatient();
-      const latestSession = patient.clinicalSessions ? patient.clinicalSessions[patient.clinicalSessions.length - 1] : null;
-      const scores = latestSession ? latestSession.scores : {
-        emocional: 85,
+      const currentSession = getActiveSession();
+      const scores = currentSession && currentSession.scores ? currentSession.scores : {
+        emocional: 75,
         ansiedad: 70,
-        riesgo: 35,
-        cognicion: 60,
+        riesgo: 25,
+        cognicion: 50,
         percepcion: 10,
-        laboral: 80,
-        social: 65,
-        protectores: 60
+        laboral: 60,
+        social: 50,
+        protectores: 65
       };
 
       const axesLabels = [
@@ -2943,7 +3626,7 @@
           data: {
             labels: axesLabels,
             datasets: [{
-              label: `Sesión (${latestSession ? latestSession.date : 'Actual'})`,
+              label: `${currentSession ? (currentSession.label || 'Sesión ' + currentSession.sessionNumber) : 'Sesión'} (${currentSession ? currentSession.date : 'Hoy'})`,
               data: axesValues,
               fill: true,
               backgroundColor: 'rgba(59, 130, 246, 0.25)',
@@ -3004,24 +3687,324 @@
     }
 
     /**
-     * SEGUIMIENTO LONGITUDINAL
+     * SISTEMA DE SESIONES CLÍNICAS LONGITUDINALES Y EXPEDIENTE
      */
+    function setCompareChartType(type) {
+      proState.compareChartType = type;
+      const btnBar = document.getElementById('btn-chart-bar');
+      const btnRadar = document.getElementById('btn-chart-radar');
+      if (btnBar && btnRadar) {
+        if (type === 'bar') {
+          btnBar.className = 'px-2.5 py-1 rounded text-[11px] font-semibold bg-blue-600 text-white transition';
+          btnRadar.className = 'px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white transition';
+        } else {
+          btnRadar.className = 'px-2.5 py-1 rounded text-[11px] font-semibold bg-cyan-600 text-white transition';
+          btnBar.className = 'px-2.5 py-1 rounded text-[11px] font-semibold text-slate-400 hover:text-white transition';
+        }
+      }
+      renderLongitudinalView();
+    }
+
+    function selectSession(sessionId) {
+      const patient = getActivePatient();
+      const sess = patient.clinicalSessions.find(s => s.id === sessionId);
+      if (!sess) return;
+
+      proState.activeSessionId = sess.id;
+      if (sess.mseData) {
+        proState.mseData = JSON.parse(JSON.stringify(sess.mseData));
+      }
+
+      saveDatabase();
+      renderPatientSelectors();
+      renderSessionTimeline();
+      loadSessionTemplateForm();
+      renderCurrentView();
+      showToast(`Cargada ${sess.label || ('Sesión ' + sess.sessionNumber)}`, 'info');
+    }
+
+    function createNewClinicalSession() {
+      const patient = getActivePatient();
+      if (!patient.clinicalSessions) patient.clinicalSessions = [];
+
+      const prevSession = patient.clinicalSessions.length > 0
+        ? patient.clinicalSessions[patient.clinicalSessions.length - 1]
+        : null;
+
+      const nextNum = patient.clinicalSessions.length + 1;
+      const today = new Date().toISOString().split('T')[0];
+      const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // HERENCIA DE DATOS:
+      // Copiar automáticamente:
+      // - Datos personales (permanecen en el paciente)
+      // - Diagnóstico preliminar / hipótesis
+      // - Factores de riesgo
+      // - Factores protectores
+      const inheritedPrimaryDx = prevSession ? prevSession.primaryDx : 'Evaluación Clínica Inicial';
+      const inheritedDiffs = prevSession && prevSession.differentials ? JSON.parse(JSON.stringify(prevSession.differentials)) : [];
+      const inheritedRiskFactors = prevSession ? (prevSession.riskFactors || 'Factores de riesgo identificados en consulta.') : 'Sin factores graves identificados.';
+      const inheritedProtectiveFactors = prevSession ? (prevSession.protectiveFactors || 'Red familiar y recursos personales.') : 'Red de apoyo continente.';
+      const previousScores = prevSession ? { ...prevSession.scores } : {
+        emocional: 60, ansiedad: 55, riesgo: 15, cognicion: 40, percepcion: 5, laboral: 45, social: 40, protectores: 70
+      };
+
+      // NO COPIAR (Deben completarse nuevamente):
+      // - Examen mental (se limpia / inicializa para nueva evaluación)
+      // - Evolución (vacío)
+      // - Observaciones clínicas (vacío)
+      const freshMse = {
+        apariencia: '',
+        conducta: '',
+        afecto: '',
+        animo: '',
+        pensamiento: '',
+        lenguaje: '',
+        atencion: '',
+        memoria: '',
+        insight: '',
+        juicio: '',
+        orientacion: ''
+      };
+
+      const newSession = {
+        id: 'sess_' + Date.now(),
+        sessionNumber: nextNum,
+        type: nextNum === 1 ? 'Evaluación Inicial' : 'Seguimiento',
+        date: today,
+        time: nowTime,
+        label: `Sesión ${nextNum} - ${nextNum === 1 ? 'Evaluación Inicial' : 'Seguimiento'}`,
+        objective: '',
+        evolution: '',
+        clinicalObservations: '',
+        techniques: '',
+        homework: '',
+        nextAppointment: '',
+        // Datos heredados:
+        primaryDx: inheritedPrimaryDx,
+        differentials: inheritedDiffs,
+        riskFactors: inheritedRiskFactors,
+        protectiveFactors: inheritedProtectiveFactors,
+        scores: previousScores,
+        riskLevel: prevSession ? (prevSession.riskLevel || 'moderate') : 'moderate',
+        mseData: freshMse
+      };
+
+      patient.clinicalSessions.push(newSession);
+      proState.activeSessionId = newSession.id;
+      proState.mseData = freshMse;
+
+      saveDatabase();
+      renderPatientSelectors();
+      renderSessionTimeline();
+      loadSessionTemplateForm();
+      renderCurrentView();
+
+      if (proState.currentView !== 'longitudinal') {
+        navigateTo('longitudinal');
+      }
+      showToast(`¡Sesión ${nextNum} creada con éxito! Datos heredados aplicados.`, 'success');
+    }
+
+    function loadSessionTemplateForm() {
+      const sess = getActiveSession();
+      if (!sess) return;
+
+      const numEl = document.getElementById('sess-form-number');
+      const dateEl = document.getElementById('sess-form-date');
+      const timeEl = document.getElementById('sess-form-time');
+      const typeEl = document.getElementById('sess-form-type');
+      const objEl = document.getElementById('sess-form-objective');
+      const evoEl = document.getElementById('sess-form-evolution');
+      const techEl = document.getElementById('sess-form-techniques');
+      const hwEl = document.getElementById('sess-form-homework');
+      const nextEl = document.getElementById('sess-form-next');
+      const badgeEl = document.getElementById('form-session-badge');
+      const typeBadgeEl = document.getElementById('form-session-type-badge');
+
+      if (numEl) numEl.value = `Sesión ${sess.sessionNumber || 1}`;
+      if (dateEl) dateEl.value = sess.date || new Date().toISOString().split('T')[0];
+      if (timeEl) timeEl.value = sess.time || '10:00';
+      if (typeEl) typeEl.value = sess.type || 'Seguimiento';
+      if (objEl) objEl.value = sess.objective || '';
+      if (evoEl) evoEl.value = sess.evolution || '';
+      if (techEl) techEl.value = sess.techniques || '';
+      if (hwEl) hwEl.value = sess.homework || '';
+      if (nextEl) nextEl.value = sess.nextAppointment || '';
+
+      if (badgeEl) badgeEl.innerText = `SESIÓN N° ${sess.sessionNumber || 1}`;
+      if (typeBadgeEl) typeBadgeEl.innerText = sess.type || 'Seguimiento';
+    }
+
+    function saveSessionTemplateForm() {
+      const sess = getActiveSession();
+      if (!sess) return;
+
+      const dateEl = document.getElementById('sess-form-date');
+      const timeEl = document.getElementById('sess-form-time');
+      const typeEl = document.getElementById('sess-form-type');
+      const objEl = document.getElementById('sess-form-objective');
+      const evoEl = document.getElementById('sess-form-evolution');
+      const techEl = document.getElementById('sess-form-techniques');
+      const hwEl = document.getElementById('sess-form-homework');
+      const nextEl = document.getElementById('sess-form-next');
+
+      if (dateEl) sess.date = dateEl.value;
+      if (timeEl) sess.time = timeEl.value;
+      if (typeEl) {
+        sess.type = typeEl.value;
+        sess.label = `Sesión ${sess.sessionNumber} - ${sess.type}`;
+      }
+      if (objEl) sess.objective = objEl.value;
+      if (evoEl) sess.evolution = evoEl.value;
+      if (techEl) sess.techniques = techEl.value;
+      if (hwEl) sess.homework = hwEl.value;
+      if (nextEl) sess.nextAppointment = nextEl.value;
+
+      saveDatabase();
+      renderPatientSelectors();
+      renderSessionTimeline();
+      renderCurrentView();
+
+      const status = document.getElementById('sess-save-status');
+      if (status) {
+        status.innerText = 'Guardado ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        status.className = 'text-emerald-400 font-bold';
+      }
+      showToast(`Cambios guardados en Sesión ${sess.sessionNumber}.`, 'success');
+    }
+
+    function updateSessionTypeFromSelect(val) {
+      const sess = getActiveSession();
+      if (!sess) return;
+      sess.type = val;
+      sess.label = `Sesión ${sess.sessionNumber} - ${val}`;
+      const typeBadgeEl = document.getElementById('form-session-type-badge');
+      if (typeBadgeEl) typeBadgeEl.innerText = val;
+      saveDatabase();
+      renderSessionTimeline();
+    }
+
+    function addTechniqueChip(tech) {
+      const input = document.getElementById('sess-form-techniques');
+      if (!input) return;
+      if (!input.value.includes(tech)) {
+        input.value = input.value ? (input.value + ', ' + tech) : tech;
+        const sess = getActiveSession();
+        if (sess) sess.techniques = input.value;
+        showToast(`Técnica añadida: ${tech}`, 'info');
+      }
+    }
+
+    async function triggerAiSessionDraft() {
+      const sess = getActiveSession();
+      const patient = getActivePatient();
+      const evoEl = document.getElementById('sess-form-evolution');
+
+      showToast('Generando evolución clínica técnica con IA...', 'info');
+      const prompt = `Paciente ${patient.name}, ${patient.age} años, en Sesión N° ${sess.sessionNumber} (${sess.type}). Diagnóstico: ${sess.primaryDx}. Objetivo: ${sess.objective || 'Seguimiento psicoterapéutico'}. Redacta una nota breve y técnica de evolución clínica en un párrafo profesional DSM-5 en español (menciona curso sintomático, tolerancia y adherencia).`;
+
+      const aiResponse = await queryClinicalAi(prompt);
+      if (aiResponse) {
+        if (evoEl) {
+          evoEl.value = aiResponse.trim();
+          sess.evolution = evoEl.value;
+          saveDatabase();
+          showToast('Evolución clínica generada por IA e insertada.', 'success');
+        }
+      } else {
+        const fallbackText = `El paciente acude a su ${sess.sessionNumber}ª sesión de ${sess.type} en tiempo y forma. Se evidencia evolución orientada a la estabilización sintomática, reportando adherencia favorable a los acuerdos intersesión. Se aplican técnicas de ${sess.techniques || 'reestructuración y activación conductual'} con adecuada receptividad y alianza terapéutica preservada.`;
+        if (evoEl) {
+          evoEl.value = fallbackText;
+          sess.evolution = fallbackText;
+          saveDatabase();
+          showToast('Evolución clínica estructurada insertada.', 'success');
+        }
+      }
+    }
+
+    function renderSessionTimeline() {
+      const patient = getActivePatient();
+      const container = document.getElementById('clinical-timeline-container');
+      if (!container) return;
+
+      const activeSess = getActiveSession();
+      const sessions = patient.clinicalSessions || [];
+
+      container.innerHTML = sessions.map((sess, idx) => {
+        const isActive = sess.id === activeSess.id;
+        const isLast = idx === sessions.length - 1;
+
+        let typeBadgeColor = 'bg-blue-500/20 text-blue-300 border-blue-500/30';
+        if (sess.type === 'Evaluación Inicial') typeBadgeColor = 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
+        else if (sess.type === 'Reevaluación') typeBadgeColor = 'bg-purple-500/20 text-purple-300 border-purple-500/30';
+        else if (sess.type === 'Cierre') typeBadgeColor = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+
+        return `
+          <div class="flex items-center">
+            <div onclick="selectSession('${sess.id}')" class="cursor-pointer group p-3.5 rounded-2xl border transition-all duration-200 min-w-[210px] max-w-[240px] ${isActive ? 'bg-gradient-to-b from-blue-900/60 to-slate-900 border-cyan-400 shadow-glow-cyan ring-1 ring-cyan-400/50' : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-800/80'}">
+              <div class="flex items-center justify-between mb-1.5">
+                <div class="flex items-center gap-1.5 font-mono text-xs font-bold text-white">
+                  <span class="w-2.5 h-2.5 rounded-full ${isActive ? 'bg-cyan-400 animate-pulse' : 'bg-slate-500 group-hover:bg-cyan-400'}"></span>
+                  <span>Sesión ${sess.sessionNumber || (idx + 1)}</span>
+                </div>
+                ${isActive ? '<span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">ACTIVA</span>' : ''}
+              </div>
+
+              <div class="text-[10px] font-semibold uppercase tracking-wider mb-1">
+                <span class="px-1.5 py-0.5 rounded border text-[9px] ${typeBadgeColor}">${sess.type || 'Seguimiento'}</span>
+              </div>
+
+              <div class="text-[11px] text-slate-400 flex items-center gap-1 font-mono mb-1">
+                <i data-lucide="calendar" class="w-3 h-3 text-slate-500"></i> ${sess.date || 'Sin fecha'}
+              </div>
+
+              <div class="text-[11px] text-slate-300 font-medium truncate" title="${sess.primaryDx || ''}">
+                ${sess.primaryDx || 'Evaluación'}
+              </div>
+            </div>
+
+            ${!isLast ? `
+              <div class="w-6 h-0.5 bg-slate-700/80 mx-1 shrink-0 flex items-center justify-center">
+                <i data-lucide="chevron-right" class="w-3 h-3 text-slate-500"></i>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML += `
+        <button onclick="createNewClinicalSession()" class="shrink-0 p-3.5 rounded-2xl border border-dashed border-slate-700 hover:border-cyan-400 bg-slate-900/40 hover:bg-slate-800/60 text-slate-400 hover:text-white flex flex-col items-center justify-center min-w-[140px] text-xs transition gap-1 group" title="Crear nueva sesión">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-cyan-400 group-hover:scale-110 transition"></i>
+          <span class="font-semibold text-[11px]">+ Nueva Sesión</span>
+        </button>
+      `;
+
+      lucide.createIcons();
+    }
+
     function renderLongitudinalView() {
       const patient = getActivePatient();
+      renderSessionTimeline();
+      loadSessionTemplateForm();
+
       const selectA = document.getElementById('longitudinal-select-a');
       const selectB = document.getElementById('longitudinal-select-b');
 
-      if (!patient.clinicalSessions || patient.clinicalSessions.length < 2) {
-        selectA.innerHTML = '<option>Se requieren al menos 2 sesiones</option>';
-        selectB.innerHTML = '<option>--</option>';
-        document.getElementById('longitudinal-delta-table').innerHTML = `
-          <tr><td colspan="5" class="p-6 text-center text-slate-400">Registre una segunda sesión para comparar la evolución longitudinal del paciente.</td></tr>
-        `;
+      if (!patient.clinicalSessions || patient.clinicalSessions.length === 0) {
         return;
       }
 
-      selectA.innerHTML = patient.clinicalSessions.map((s, i) => `<option value="${s.id}">${s.date} - ${s.label}</option>`).join('');
-      selectB.innerHTML = patient.clinicalSessions.map((s, i) => `<option value="${s.id}" ${i === patient.clinicalSessions.length - 1 ? 'selected' : ''}>${s.date} - ${s.label}</option>`).join('');
+      if (patient.clinicalSessions.length === 1) {
+        const singleSess = patient.clinicalSessions[0];
+        selectA.innerHTML = `<option value="${singleSess.id}">Sesión 1 - ${singleSess.date}</option>`;
+        selectB.innerHTML = `<option value="${singleSess.id}">Sesión 1 (Única sesión)</option>`;
+      } else {
+        const curA = selectA.value;
+        const curB = selectB.value;
+        selectA.innerHTML = patient.clinicalSessions.map((s, i) => `<option value="${s.id}" ${s.id === curA || (!curA && i === 0) ? 'selected' : ''}>${s.date} - ${s.label || ('Sesión ' + s.sessionNumber)}</option>`).join('');
+        selectB.innerHTML = patient.clinicalSessions.map((s, i) => `<option value="${s.id}" ${s.id === curB || (!curB && i === patient.clinicalSessions.length - 1) ? 'selected' : ''}>${s.date} - ${s.label || ('Sesión ' + s.sessionNumber)}</option>`).join('');
+      }
 
       const idA = selectA.value;
       const idB = selectB.value;
@@ -3031,68 +4014,445 @@
       const axesKeys = ['emocional', 'ansiedad', 'riesgo', 'cognicion', 'laboral', 'social', 'protectores'];
       const axesNames = ['Estado Emocional', 'Ansiedad', 'Riesgo Suicida', 'Déficit Cognitivo', 'Disfunción Laboral', 'Aislamiento Social', 'Factores Protectores'];
 
+      // Actualizar Tarjetas Comparativas de Resumen
+      const pillSymptoms = document.getElementById('comp-symptoms-pill');
+      const textSymptoms = document.getElementById('comp-symptoms-text');
+      const pillRisk = document.getElementById('comp-risk-pill');
+      const textRisk = document.getElementById('comp-risk-text');
+      const pillDx = document.getElementById('comp-dx-status-pill');
+      const textDx = document.getElementById('comp-dx-text');
+
+      const scoresA = sessA.scores || {};
+      const scoresB = sessB.scores || {};
+
+      const avgSymptomA = ((scoresA.emocional || 0) + (scoresA.ansiedad || 0)) / 2;
+      const avgSymptomB = ((scoresB.emocional || 0) + (scoresB.ansiedad || 0)) / 2;
+      const symptomDiff = avgSymptomB - avgSymptomA;
+
+      if (pillSymptoms && textSymptoms) {
+        if (symptomDiff < 0) {
+          pillSymptoms.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300';
+          pillSymptoms.innerText = `${symptomDiff.toFixed(0)}% Remisión`;
+          textSymptoms.innerText = `Disminución sostenida del malestar afectivo y la tensión somática respecto a la Sesión ${sessA.sessionNumber}.`;
+        } else if (symptomDiff > 0) {
+          pillSymptoms.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300';
+          pillSymptoms.innerText = `+${symptomDiff.toFixed(0)}% Exacerbación`;
+          textSymptoms.innerText = `Repunte sintomático en la Sesión ${sessB.sessionNumber}. Revisar estresores intercurrentes.`;
+        } else {
+          pillSymptoms.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300';
+          pillSymptoms.innerText = 'Estable (0%)';
+          textSymptoms.innerText = 'Sin variación apreciable en la intensidad del malestar somático y emocional.';
+        }
+      }
+
+      if (pillRisk && textRisk) {
+        const riskA = (sessA.riskLevel || 'moderate').toUpperCase();
+        const riskB = (sessB.riskLevel || 'moderate').toUpperCase();
+        pillRisk.innerText = `${riskA} → ${riskB}`;
+        if (riskA === 'HIGH' && (riskB === 'LOW' || riskB === 'MODERATE')) {
+          pillRisk.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300';
+          textRisk.innerText = 'Reducción favorable de riesgo vital con consolidación de contención protectora.';
+        } else {
+          pillRisk.className = 'text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300';
+          textRisk.innerText = `Factores protectores evolucionaron de ${scoresA.protectores || 0}% a ${scoresB.protectores || 0}%.`;
+        }
+      }
+
+      if (pillDx && textDx) {
+        pillDx.innerText = sessB.primaryDx ? (sessB.primaryDx.includes('Remisión') ? 'En Remisión' : 'Diagnóstico Activo') : 'Hipótesis Activa';
+        textDx.innerText = `${sessA.primaryDx || 'Sesión A'} → ${sessB.primaryDx || 'Sesión B'}`;
+      }
+
+      // Renderizar Gráfica (Barras o Radar)
       const ctx = document.getElementById('longitudinalCompareCanvas');
       if (ctx) {
         if (proState.charts.longitudinal) proState.charts.longitudinal.destroy();
 
-        proState.charts.longitudinal = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: axesNames,
-            datasets: [
-              {
-                label: `Base: ${sessA.date}`,
-                data: axesKeys.map(k => sessA.scores[k] || 0),
-                backgroundColor: 'rgba(148, 163, 184, 0.5)',
-                borderRadius: 4
-              },
-              {
-                label: `Actual: ${sessB.date}`,
-                data: axesKeys.map(k => sessB.scores[k] || 0),
-                backgroundColor: 'rgba(6, 182, 212, 0.85)',
-                borderRadius: 4
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              x: { grid: { color: 'rgba(148, 163, 184, 0.1)' }, ticks: { color: '#94A3B8', font: { size: 10 } } },
-              y: { suggestedMin: 0, suggestedMax: 100, grid: { color: 'rgba(148, 163, 184, 0.1)' }, ticks: { color: '#94A3B8' } }
+        if (proState.compareChartType === 'radar') {
+          proState.charts.longitudinal = new Chart(ctx, {
+            type: 'radar',
+            data: {
+              labels: axesNames,
+              datasets: [
+                {
+                  label: `Sesión ${sessA.sessionNumber} (${sessA.date})`,
+                  data: axesKeys.map(k => scoresA[k] || 0),
+                  backgroundColor: 'rgba(148, 163, 184, 0.25)',
+                  borderColor: '#94A3B8',
+                  pointBackgroundColor: '#94A3B8',
+                  borderWidth: 2
+                },
+                {
+                  label: `Sesión ${sessB.sessionNumber} (${sessB.date})`,
+                  data: axesKeys.map(k => scoresB[k] || 0),
+                  backgroundColor: 'rgba(6, 182, 212, 0.35)',
+                  borderColor: '#06B6D4',
+                  pointBackgroundColor: '#06B6D4',
+                  borderWidth: 2.5
+                }
+              ]
             },
-            plugins: {
-              legend: { labels: { color: '#F8FAFC' } }
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                r: {
+                  grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                  angleLines: { color: 'rgba(148, 163, 184, 0.15)' },
+                  pointLabels: { color: '#E2E8F0', font: { size: 10, weight: '500' } },
+                  suggestedMin: 0,
+                  suggestedMax: 100,
+                  ticks: { stepSize: 25, backdropColor: 'transparent', color: '#64748B', font: { size: 9 } }
+                }
+              },
+              plugins: {
+                legend: { position: 'top', labels: { color: '#F8FAFC', font: { size: 11 } } }
+              }
             }
-          }
-        });
+          });
+        } else {
+          proState.charts.longitudinal = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: axesNames,
+              datasets: [
+                {
+                  label: `Sesión ${sessA.sessionNumber} (${sessA.date})`,
+                  data: axesKeys.map(k => scoresA[k] || 0),
+                  backgroundColor: 'rgba(148, 163, 184, 0.55)',
+                  borderRadius: 6
+                },
+                {
+                  label: `Sesión ${sessB.sessionNumber} (${sessB.date})`,
+                  data: axesKeys.map(k => scoresB[k] || 0),
+                  backgroundColor: 'rgba(6, 182, 212, 0.85)',
+                  borderRadius: 6
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: { grid: { color: 'rgba(148, 163, 184, 0.1)' }, ticks: { color: '#94A3B8', font: { size: 10 } } },
+                y: { suggestedMin: 0, suggestedMax: 100, grid: { color: 'rgba(148, 163, 184, 0.1)' }, ticks: { color: '#94A3B8' } }
+              },
+              plugins: {
+                legend: { position: 'top', labels: { color: '#F8FAFC', font: { size: 11 } } }
+              }
+            }
+          });
+        }
       }
 
-      document.getElementById('longitudinal-delta-table').innerHTML = axesKeys.map((k, idx) => {
-        const valA = sessA.scores[k] || 0;
-        const valB = sessB.scores[k] || 0;
-        const delta = valB - valA;
+      // Tabla de Deltas de Variación
+      const tableBody = document.getElementById('longitudinal-delta-table');
+      if (tableBody) {
+        tableBody.innerHTML = axesKeys.map((k, idx) => {
+          const valA = scoresA[k] || 0;
+          const valB = scoresB[k] || 0;
+          const delta = valB - valA;
 
-        let deltaHtml = `<span class="text-slate-400">0%</span>`;
-        let interp = 'Estable / Sin cambios';
+          let deltaHtml = `<span class="text-slate-400 font-mono">0%</span>`;
+          let interp = 'Estable / Sin cambios significativos';
 
-        if (k === 'protectores') {
-          if (delta > 0) { deltaHtml = `<span class="text-emerald-400 font-bold font-mono">↑ +${delta}%</span>`; interp = 'Incremento notable de resiliencia'; }
-        } else {
-          if (delta < 0) { deltaHtml = `<span class="text-emerald-400 font-bold font-mono">↓ ${delta}%</span>`; interp = 'Remisión sintomática favorable'; }
-          else if (delta > 0) { deltaHtml = `<span class="text-rose-400 font-bold font-mono">↑ +${delta}%</span>`; interp = 'Exacerbación sintomática'; }
+          if (k === 'protectores') {
+            if (delta > 0) {
+              deltaHtml = `<span class="text-emerald-400 font-bold font-mono">↑ +${delta}%</span>`;
+              interp = 'Incremento notable de resiliencia y recursos';
+            } else if (delta < 0) {
+              deltaHtml = `<span class="text-rose-400 font-bold font-mono">↓ ${delta}%</span>`;
+              interp = 'Disminución de factores de contención';
+            }
+          } else {
+            if (delta < 0) {
+              deltaHtml = `<span class="text-emerald-400 font-bold font-mono">↓ ${delta}%</span>`;
+              interp = 'Remisión sintomática favorable';
+            } else if (delta > 0) {
+              deltaHtml = `<span class="text-rose-400 font-bold font-mono">↑ +${delta}%</span>`;
+              interp = 'Exacerbación sintomática transitoria';
+            }
+          }
+
+          return `
+            <tr class="hover:bg-slate-800/40">
+              <td class="p-3 font-semibold text-white">${axesNames[idx]}</td>
+              <td class="p-3 font-mono">${valA}%</td>
+              <td class="p-3 font-mono font-bold text-cyan-300">${valB}%</td>
+              <td class="p-3">${deltaHtml}</td>
+              <td class="p-3 text-slate-400 text-xs">${interp}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      renderTrajectoryChart();
+      renderLongitudinalCompiledReport();
+    }
+
+    function renderTrajectoryChart() {
+      const patient = getActivePatient();
+      const canvas = document.getElementById('trajectoryCanvas');
+      if (!canvas) return;
+
+      const sessions = patient.clinicalSessions || [];
+      if (sessions.length === 0) return;
+
+      const labels = sessions.map(s => `Sesión ${s.sessionNumber} (${s.date})`);
+      const dataEmocional = sessions.map(s => s.scores?.emocional || 0);
+      const dataAnsiedad = sessions.map(s => s.scores?.ansiedad || 0);
+      const dataRiesgo = sessions.map(s => s.scores?.riesgo || 0);
+      const dataProtectores = sessions.map(s => s.scores?.protectores || 0);
+
+      if (proState.charts.trajectory) {
+        proState.charts.trajectory.destroy();
+      }
+
+      proState.charts.trajectory = new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Malestar Emocional',
+              data: dataEmocional,
+              borderColor: '#F43F5E',
+              backgroundColor: 'rgba(244, 63, 94, 0.1)',
+              tension: 0.35,
+              borderWidth: 2.5,
+              pointRadius: 5,
+              pointBackgroundColor: '#F43F5E'
+            },
+            {
+              label: 'Ansiedad / Tensión',
+              data: dataAnsiedad,
+              borderColor: '#F59E0B',
+              backgroundColor: 'rgba(245, 158, 11, 0.1)',
+              tension: 0.35,
+              borderWidth: 2.5,
+              pointRadius: 5,
+              pointBackgroundColor: '#F59E0B'
+            },
+            {
+              label: 'Riesgo Suicida / Impulso',
+              data: dataRiesgo,
+              borderColor: '#A855F7',
+              backgroundColor: 'rgba(168, 85, 247, 0.1)',
+              tension: 0.35,
+              borderWidth: 2.5,
+              pointRadius: 5,
+              pointBackgroundColor: '#A855F7'
+            },
+            {
+              label: 'Factores Protectores (Resiliencia)',
+              data: dataProtectores,
+              borderColor: '#10B981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              tension: 0.35,
+              borderWidth: 2.5,
+              pointRadius: 5,
+              pointBackgroundColor: '#10B981'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              grid: { color: 'rgba(148, 163, 184, 0.1)' },
+              ticks: { color: '#94A3B8', font: { size: 10 } }
+            },
+            y: {
+              suggestedMin: 0,
+              suggestedMax: 100,
+              grid: { color: 'rgba(148, 163, 184, 0.1)' },
+              ticks: { color: '#94A3B8' }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { color: '#F8FAFC', font: { size: 11 }, boxWidth: 14 }
+            }
+          }
         }
+      });
+    }
 
-        return `
-          <tr class="hover:bg-slate-800/40">
-            <td class="p-3 font-semibold text-white">${axesNames[idx]}</td>
-            <td class="p-3 font-mono">${valA}%</td>
-            <td class="p-3 font-mono font-bold">${valB}%</td>
-            <td class="p-3">${deltaHtml}</td>
-            <td class="p-3 text-slate-400 text-xs">${interp}</td>
+    function renderLongitudinalCompiledReport() {
+      const patient = getActivePatient();
+      const sessions = patient.clinicalSessions || [];
+      if (sessions.length === 0) return;
+
+      const firstSess = sessions[0];
+      const lastSess = sessions[sessions.length - 1];
+
+      const folioEl = document.getElementById('rep-long-folio');
+      const dateEl = document.getElementById('rep-long-date');
+      const countEl = document.getElementById('rep-long-sess-count');
+      const nameEl = document.getElementById('rep-long-name');
+      const ageSexEl = document.getElementById('rep-long-age-sex');
+      const occEl = document.getElementById('rep-long-occ');
+      const periodEl = document.getElementById('rep-long-period');
+      const tableEl = document.getElementById('rep-long-sessions-table');
+      const initialSumEl = document.getElementById('rep-long-initial-summary');
+      const currentSumEl = document.getElementById('rep-long-current-summary');
+      const planEl = document.getElementById('rep-long-plan');
+      const narrativeEl = document.getElementById('rep-long-narrative');
+
+      if (folioEl) folioEl.innerText = patient.folio || 'JR-DSM5-2026-001';
+      if (dateEl) dateEl.innerText = new Date().toISOString().split('T')[0];
+      if (countEl) countEl.innerText = `${sessions.length} Sesiones Registradas`;
+      if (nameEl) nameEl.innerText = patient.name;
+      if (ageSexEl) ageSexEl.innerText = `${patient.age} años • ${patient.sex}`;
+      if (occEl) occEl.innerText = patient.occupation || 'No registrada';
+      if (periodEl) periodEl.innerText = `${firstSess.date} al ${lastSess.date}`;
+
+      if (tableEl) {
+        tableEl.innerHTML = sessions.map(s => `
+          <tr class="hover:bg-slate-50">
+            <td class="p-2.5 font-bold text-blue-700">Sesión ${s.sessionNumber}</td>
+            <td class="p-2.5 font-mono">${s.date}</td>
+            <td class="p-2.5"><span class="px-2 py-0.5 rounded bg-slate-100 font-semibold text-[10px]">${s.type}</span></td>
+            <td class="p-2.5 font-semibold text-slate-800">${s.primaryDx || 'Evaluación'}</td>
+            <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.riskLevel === 'high' ? 'bg-rose-100 text-rose-800' : (s.riskLevel === 'low' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')}">${(s.riskLevel || 'moderado').toUpperCase()}</span></td>
+            <td class="p-2.5 text-slate-600 max-w-[220px]">
+              <div><strong>Técnicas:</strong> ${s.techniques || 'Psicoterapia'}</div>
+              <div class="truncate text-[10px] text-slate-500">${s.evolution || 'Seguimiento completado'}</div>
+            </td>
           </tr>
-        `;
-      }).join('');
+        `).join('');
+      }
+
+      if (initialSumEl) {
+        initialSumEl.innerText = `${firstSess.primaryDx}. ${firstSess.evolution || 'Inicio de evaluación clínica y encuadre inicial.'}`;
+      }
+
+      if (currentSumEl) {
+        currentSumEl.innerText = `${lastSess.primaryDx}. ${lastSess.evolution || 'Evolución positiva con apego a los acuerdos de psicoterapia.'}`;
+      }
+
+      if (narrativeEl) {
+        narrativeEl.innerText = `El paciente ${patient.name} (${patient.age} años) ha completado un total de ${sessions.length} sesiones clínicas entre ${firstSess.date} y ${lastSess.date}. La evaluación inicial evidenció compatibilidad con ${firstSess.primaryDx}. A lo largo del seguimiento longitudinal estructurado y la implementación de técnicas de ${lastSess.techniques || 'TCC'}, se constata una trayectoria clínica ${sessions.length > 1 ? 'con remisión gradual de los síntomas cardinales y fortalecimiento de los factores protectores' : 'en fase inicial de exploración anamnésica'}.`;
+      }
+    }
+
+    function exportLongitudinalReportPDF() {
+      renderLongitudinalCompiledReport();
+      const patient = getActivePatient();
+      const element = document.getElementById('longitudinal-official-report');
+      const filename = `Informe_Longitudinal_DSM5_PRO_${patient.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+
+      showToast('Generando informe longitudinal en PDF...', 'info');
+
+      const opt = {
+        margin: [8, 8, 8, 8],
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      if (window.html2pdf) {
+        html2pdf().set(opt).from(element).save().then(() => {
+          if (window.confetti) confetti({ particleCount: 50, spread: 60 });
+          showToast('Informe Longitudinal PDF descargado con éxito.', 'success');
+        }).catch(err => {
+          console.error(err);
+          window.print();
+        });
+      } else {
+        window.print();
+      }
+    }
+
+    function exportLongitudinalReportDOCX() {
+      renderLongitudinalCompiledReport();
+      const patient = getActivePatient();
+      showToast('Generando informe longitudinal Word (.doc / .docx)...', 'info');
+
+      const sessionsRows = (patient.clinicalSessions || []).map(s => `
+        <tr>
+          <td><strong>Sesión ${s.sessionNumber}</strong><br><small>${s.date}</small></td>
+          <td>${s.type}</td>
+          <td>${s.primaryDx}</td>
+          <td>${(s.riskLevel || 'moderado').toUpperCase()}</td>
+          <td><strong>Técnicas:</strong> ${s.techniques || 'N/A'}<br><strong>Evolución:</strong> ${s.evolution || 'N/A'}</td>
+        </tr>
+      `).join('');
+
+      const docHtml = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+          <meta charset="utf-8">
+          <title>Informe Longitudinal DSM-5 PRO - ${patient.name}</title>
+          <style>
+            body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 11pt; line-height: 1.4; color: #1e293b; }
+            h1 { font-size: 18pt; color: #1d4ed8; margin-bottom: 2pt; }
+            h2 { font-size: 13pt; color: #0f172a; border-bottom: 1px solid #cbd5e1; padding-bottom: 3pt; margin-top: 14pt; }
+            .legal { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 6pt; font-size: 9pt; margin-bottom: 12pt; }
+            table { width: 100%; border-collapse: collapse; margin-top: 8pt; font-size: 10pt; }
+            th, td { border: 1px solid #cbd5e1; padding: 5pt; text-align: left; }
+            th { background: #f8fafc; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <h1>JAIRRESTAURA DSM-5 PRO</h1>
+          <p><strong>INFORME DE EVOLUCIÓN LONGITUDINAL Y TRAYECTORIA CLÍNICA</strong><br>
+          Folio: ${patient.folio || 'JR-DSM5-2026-001'} | Emisión: ${new Date().toISOString().split('T')[0]} | Total Sesiones: ${patient.clinicalSessions ? patient.clinicalSessions.length : 1}</p>
+
+          <div class="legal">
+            <strong>AVISO ÉTICO Y LEGAL:</strong> Esta herramienta es únicamente de apoyo clínico y educativo. No sustituye la evaluación diagnóstica realizada por un profesional de salud mental colegiado.
+          </div>
+
+          <h2>1. Datos Generales del Paciente</h2>
+          <p>Nombre: ${patient.name} | Edad: ${patient.age} años | Sexo: ${patient.sex} | Ocupación: ${patient.occupation || 'N/A'}</p>
+
+          <h2>2. Resumen de Trayectoria y Curso Clínico</h2>
+          <p>${document.getElementById('rep-long-narrative').innerText}</p>
+
+          <h2>3. Registro Cronológico de Sesiones</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Sesión</th>
+                <th>Tipo</th>
+                <th>Diagnóstico</th>
+                <th>Riesgo</th>
+                <th>Evolución y Técnicas</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sessionsRows}
+            </tbody>
+          </table>
+
+          <h2>4. Comparativa Línea Base vs Estado Actual</h2>
+          <p><strong>Inicial:</strong> ${document.getElementById('rep-long-initial-summary').innerText}</p>
+          <p><strong>Actual:</strong> ${document.getElementById('rep-long-current-summary').innerText}</p>
+
+          <h2>5. Conclusiones y Plan de Continuidad</h2>
+          <p>${document.getElementById('rep-long-plan').innerText}</p>
+
+          <br><br>
+          <p style="border-top: 1px solid #94a3b8; width: 220px; text-align: center; padding-top: 5pt; font-size: 9pt;">
+            Firma del Profesional Evaluador
+          </p>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob(['\ufeff', docHtml], { type: 'application/msword;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Informe_Longitudinal_DSM5_PRO_${patient.name.replace(/\s+/g, '_')}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('Documento Word Longitudinal descargado.', 'success');
     }
 
     /**
@@ -3531,6 +4891,7 @@
      */
     function renderPatientsTable() {
       const tbody = document.getElementById('patients-table-tbody');
+      if (!tbody) return;
       tbody.innerHTML = proState.patients.map(p => {
         const isActive = p.id === proState.activePatientId;
         const lastSess = p.clinicalSessions ? p.clinicalSessions[p.clinicalSessions.length - 1] : null;
@@ -3546,10 +4907,18 @@
             </td>
             <td class="p-3 font-mono text-slate-400">${p.folio || p.id}</td>
             <td class="p-3">${p.age}a • ${p.sex}</td>
-            <td class="p-3 font-mono font-bold">${p.clinicalSessions ? p.clinicalSessions.length : 1}</td>
+            <td class="p-3">
+              <button onclick="changeActivePatient('${p.id}'); navigateTo('longitudinal');" class="font-mono font-bold text-cyan-300 hover:underline flex items-center gap-1">
+                <i data-lucide="git-commit" class="w-3.5 h-3.5"></i>
+                <span>${p.clinicalSessions ? p.clinicalSessions.length : 1}</span>
+              </button>
+            </td>
             <td class="p-3 text-slate-400">${lastSess ? lastSess.date : 'Hoy'}</td>
             <td class="p-3 text-cyan-400 font-medium truncate max-w-[200px]">${lastSess ? lastSess.primaryDx : 'Evaluación en curso'}</td>
             <td class="p-3 text-right space-x-1">
+              <button onclick="changeActivePatient('${p.id}'); createNewClinicalSession();" class="px-2 py-1 bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-300 border border-cyan-500/40 rounded-lg text-[11px] font-semibold transition" title="Crear nueva sesión directa">
+                + Sesión
+              </button>
               <button onclick="changeActivePatient('${p.id}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] font-semibold transition">
                 Seleccionar
               </button>
@@ -3568,27 +4937,63 @@
 
     function renderPatientSelectors() {
       const select = document.getElementById('active-patient-select');
-      select.innerHTML = proState.patients.map(p => `
-        <option value="${p.id}" ${p.id === proState.activePatientId ? 'selected' : ''}>
-          ${p.name} (${p.age}a)
-        </option>
-      `).join('');
+      if (select) {
+        select.innerHTML = proState.patients.map(p => `
+          <option value="${p.id}" ${p.id === proState.activePatientId ? 'selected' : ''}>
+            ${p.name} (${p.age}a)
+          </option>
+        `).join('');
+      }
 
       const active = getActivePatient();
+      const activeSess = getActiveSession();
       if (active) {
-        document.getElementById('patient-age-sex').innerText = `${active.age} años • ${active.sex}`;
-        document.getElementById('patient-eval-count').innerText = `${active.clinicalSessions ? active.clinicalSessions.length : 1} sesiones`;
+        const countText = `${active.clinicalSessions ? active.clinicalSessions.length : 1} sesiones`;
+        const ageSexEl = document.getElementById('patient-age-sex');
+        const evalCountEl = document.getElementById('patient-eval-count');
+        const sessBadgeEl = document.getElementById('sidebar-active-sess-label');
+        const navPillEl = document.getElementById('nav-sessions-count-pill');
+        const expCounter = document.getElementById('expedient-sessions-counter');
+        const expName = document.getElementById('expedient-patient-name');
+        const expMeta = document.getElementById('expedient-patient-meta');
+        const expFolio = document.getElementById('expedient-folio-badge');
+
+        if (ageSexEl) ageSexEl.innerText = `${active.age} años • ${active.sex}`;
+        if (evalCountEl) evalCountEl.innerText = countText;
+        if (sessBadgeEl && activeSess) sessBadgeEl.innerText = `Sesión ${activeSess.sessionNumber} (${activeSess.type || 'Seguimiento'})`;
+        if (navPillEl) navPillEl.innerText = active.clinicalSessions ? active.clinicalSessions.length : 1;
+        if (expCounter) expCounter.innerText = active.clinicalSessions ? active.clinicalSessions.length : 1;
+        if (expName) expName.innerText = active.name;
+        if (expMeta) expMeta.innerText = `(${active.age} años • ${active.sex})`;
+        if (expFolio) expFolio.innerText = active.folio || 'JR-DSM5-2026-001';
+
+        // Selector de sesión en cabecera superior
+        const headerSessSelect = document.getElementById('header-session-select');
+        if (headerSessSelect && active.clinicalSessions) {
+          headerSessSelect.innerHTML = active.clinicalSessions.map(s => `
+            <option value="${s.id}" ${s.id === proState.activeSessionId ? 'selected' : ''}>
+              Sesión ${s.sessionNumber} (${s.type || 'Seguimiento'})
+            </option>
+          `).join('');
+        }
       }
     }
 
     function changeActivePatient(newId) {
       proState.activePatientId = newId;
+      const patient = getActivePatient();
+      if (patient.clinicalSessions && patient.clinicalSessions.length > 0) {
+        proState.activeSessionId = patient.clinicalSessions[patient.clinicalSessions.length - 1].id;
+        if (getActiveSession().mseData) {
+          proState.mseData = JSON.parse(JSON.stringify(getActiveSession().mseData));
+        }
+      }
       saveDatabase();
       renderPatientSelectors();
       initChatSession();
       loadClinicalHistoryForm();
       renderCurrentView();
-      showToast(`Paciente seleccionado: ${getActivePatient().name}`, 'info');
+      showToast(`Paciente seleccionado: ${patient.name}`, 'info');
     }
 
     function deletePatient(patientId) {
@@ -3729,7 +5134,7 @@
         differential: { title: 'Centro de Diagnóstico Diferencial', sub: 'Jerarquización y matriz de compatibilidad probabilística' },
         profile: { title: 'Perfil Clínico Multiaxial', sub: 'Radar de 8 dimensiones funcionales y sintomáticas' },
         prognosis: { title: 'Pronóstico Clínico y Plan Terapéutico', sub: 'Análisis multidimensional de adherencia, severidad y psicoterapia sugerida' },
-        longitudinal: { title: 'Seguimiento Longitudinal', sub: 'Comparador de evolución clínica entre sesiones sucesivas' },
+        longitudinal: { title: 'Expediente Clínico & Sesiones Longitudinales', sub: 'Línea de tiempo cronológica, registro estructurado de sesiones, comparador multiaxial e informe consolidado' },
         documents: { title: 'Análisis Inteligente de Archivos', sub: 'Extracción semántica y lectura guiada en PDF, DOCX y TXT' },
         report: { title: 'Informe Profesional Oficial (12 Secciones)', sub: 'Documentación psicodiagnóstica para expediente y derivación' },
         patients: { title: 'Directorio de Pacientes', sub: 'Registro seguro local de historias y consultas' }
